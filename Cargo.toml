@@ -1,8 +1,19 @@
 [package]
 name = "dd-trace-layer"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+opentelemetry = { version = "0.18", features = ["rt-tokio"] }
+opentelemetry-datadog = { version = "0.6", features = ["reqwest-client"] }
+opentelemetry-semantic-conventions = "0.10"
+tower = { version = "0.4", features = ["util"] }
+futures = "0.3"
+http = "0.2"
+http-body = "0.4"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+hyper = { version = "0.14", features = ["full"] }
+tower = { version = "0.4", features = ["full"] }
+axum = "0.6.0-rc.2"
