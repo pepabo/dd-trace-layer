@@ -2,6 +2,12 @@
 name = "dd-trace-layer"
 version = "0.0.1"
 edition = "2021"
+authors = ["Takayuki Nakata <f.seasons017@gmail.com>"]
+license = "MIT"
+description = "A middleware for sending Datadog's trace"
+repository = "https://github.com/pepabo/dd-trace-layer"
+readme = "README.md"
+keywords = ["middleware", "datadog", "axum", "hyper", "opentelemetry"]
 
 [dependencies]
 opentelemetry = { version = "0.18", features = ["rt-tokio"] }
