@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  - push
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-and-fmt:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [nightly, stable]
+    steps:
+    - uses: actions/checkout@v3
+    - name: check
+      run: cargo check --verbose
+    - name: test
+      run: cargo test --verbose --workspace
+    - name: fmt
+      run: |
+        rustup component add rustfmt
+        cargo fmt --verbose --all -- --check
+    - name: clippy
+      run: |
+        rustup component add clippy
+        cargo clippy --workspace -- -D clippy::all
