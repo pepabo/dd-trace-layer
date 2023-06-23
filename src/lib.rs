@@ -27,6 +27,7 @@ pub fn init(service_name: &str, endpoint: &str, version: ApiVersion) {
         .expect("failed to initialize tracing pipeline");
 }
 
+#[derive(Clone, Debug)]
 pub struct DDTraceLayer {
     operation: String,
 }
