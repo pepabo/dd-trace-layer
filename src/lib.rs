@@ -150,7 +150,7 @@ where
                     Err(err_res)
                 }
             });
-        Box::pin(async move { fut.await })
+        Box::pin(fut)
     }
 }
 
