@@ -14,15 +14,18 @@ jobs:
         rust: [nightly, stable]
     steps:
     - uses: actions/checkout@v3
+    - name: install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        components: rustfmt,clippy
+    - name: info
+      run: rustc --version
     - name: check
       run: cargo check --verbose
     - name: test
       run: cargo test --verbose --workspace
     - name: fmt
-      run: |
-        rustup component add rustfmt
-        cargo fmt --verbose --all -- --check
+      run: cargo fmt --verbose --all -- --check
     - name: clippy
-      run: |
-        rustup component add clippy
-        cargo clippy --workspace -- -D clippy::all
+      run: cargo clippy --workspace -- -D clippy::all

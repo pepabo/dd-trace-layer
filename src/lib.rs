@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use futures::{Future, FutureExt};
 use http::{header, Request, Response};
 use http_body::Body;
-use opentelemetry::trace::{FutureExt as OtelFutureExt, TraceContextExt, Tracer};
+use opentelemetry::trace::{FutureExt as OtelFutureExt, Status, TraceContextExt, Tracer};
 use opentelemetry::{global, Context as OtelContext, Key};
 use opentelemetry_datadog::new_pipeline;
 use opentelemetry_semantic_conventions::trace::{
@@ -27,6 +27,7 @@ pub fn init(service_name: &str, endpoint: &str, version: ApiVersion) {
         .expect("failed to initialize tracing pipeline");
 }
 
+#[derive(Clone, Debug)]
 pub struct DDTraceLayer {
     operation: String,
 }
@@ -128,6 +129,15 @@ where
                 Ok(ok_res) => {
                     let span = cx.span();
                     span.set_attribute(HTTP_STATUS_CODE.i64(ok_res.status().as_u16().into()));
+                    if ok_res.status().is_server_error() {
+                        span.set_status(Status::error(
+                            ok_res
+                                .status()
+                                .canonical_reason()
+                                .map(|s| s.to_string())
+                                .unwrap_or_default(),
+                        ));
+                    }
                     span.end();
                     Ok(ok_res)
                 }
@@ -135,11 +145,12 @@ where
                     let span = cx.span();
                     span.set_attribute(HTTP_STATUS_CODE.i64(500));
                     span.set_attribute(Key::new("error.msg").string(err_res.to_string()));
+                    span.set_status(Status::error(err_res.to_string()));
                     span.end();
                     Err(err_res)
                 }
             });
-        Box::pin(async move { fut.await })
+        Box::pin(fut)
     }
 }
 
