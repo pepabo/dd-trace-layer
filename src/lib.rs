@@ -7,9 +7,9 @@ use futures::{Future, FutureExt};
 use http::{header, Request, Response};
 use http_body::Body;
 use opentelemetry::trace::{FutureExt as OtelFutureExt, Status, TraceContextExt, Tracer};
-use opentelemetry::{global, Context as OtelContext, Key};
+use opentelemetry::{global, Context as OtelContext, KeyValue};
 use opentelemetry_datadog::new_pipeline;
-use opentelemetry_semantic_conventions::trace::{
+use opentelemetry_semantic_conventions::attribute::{
     HTTP_CLIENT_IP, HTTP_FLAVOR, HTTP_HOST, HTTP_METHOD, HTTP_SCHEME, HTTP_STATUS_CODE, HTTP_URL,
     HTTP_USER_AGENT,
 };
@@ -21,9 +21,9 @@ pub use opentelemetry_datadog::ApiVersion;
 pub fn init(service_name: &str, endpoint: &str, version: ApiVersion) {
     let _tracer = new_pipeline()
         .with_service_name(service_name)
-        .with_version(version)
+        .with_api_version(version)
         .with_agent_endpoint(endpoint)
-        .install_batch(opentelemetry::runtime::Tokio)
+        .install_batch(opentelemetry_sdk::runtime::Tokio)
         .expect("failed to initialize tracing pipeline");
 }
 
@@ -109,13 +109,13 @@ where
         let span = tracer
             .span_builder(path)
             .with_attributes(vec![
-                HTTP_URL.string(url),
-                HTTP_METHOD.string(method),
-                HTTP_FLAVOR.string(version),
-                HTTP_USER_AGENT.string(user_agent),
-                HTTP_HOST.string(host),
-                HTTP_SCHEME.string(scheme),
-                HTTP_CLIENT_IP.string(client_ip),
+                KeyValue::new(HTTP_URL, url),
+                KeyValue::new(HTTP_METHOD, method),
+                KeyValue::new(HTTP_FLAVOR, version),
+                KeyValue::new(HTTP_USER_AGENT, user_agent),
+                KeyValue::new(HTTP_HOST, host),
+                KeyValue::new(HTTP_SCHEME, scheme),
+                KeyValue::new(HTTP_CLIENT_IP, client_ip),
             ])
             .with_start_time(start_time)
             .start(&tracer);
@@ -128,7 +128,10 @@ where
             .map(move |res| match res {
                 Ok(ok_res) => {
                     let span = cx.span();
-                    span.set_attribute(HTTP_STATUS_CODE.i64(ok_res.status().as_u16().into()));
+                    span.set_attribute(KeyValue::new(
+                        HTTP_STATUS_CODE,
+                        ok_res.status().as_u16() as i64,
+                    ));
                     if ok_res.status().is_server_error() {
                         span.set_status(Status::error(
                             ok_res
@@ -143,8 +146,8 @@ where
                 }
                 Err(err_res) => {
                     let span = cx.span();
-                    span.set_attribute(HTTP_STATUS_CODE.i64(500));
-                    span.set_attribute(Key::new("error.msg").string(err_res.to_string()));
+                    span.set_attribute(KeyValue::new(HTTP_STATUS_CODE, 500));
+                    span.set_attribute(KeyValue::new("error.msg", err_res.to_string()));
                     span.set_status(Status::error(err_res.to_string()));
                     span.end();
                     Err(err_res)
