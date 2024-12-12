@@ -11,7 +11,7 @@ keywords = ["middleware", "datadog", "axum", "hyper", "opentelemetry"]
 
 [dependencies]
 opentelemetry = { version = "0.18", features = ["rt-tokio"] }
-opentelemetry-datadog = { version = "0.6", features = ["reqwest-client"] }
+opentelemetry-datadog = { version = "0.15", features = ["reqwest-client"] }
 opentelemetry-semantic-conventions = "0.10"
 tower = { version = "0.4", features = ["util"] }
 futures = "0.3"
